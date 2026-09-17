@@ -1,0 +1,19 @@
+# Backups and build archives
+backups/
+*.tar.gz
+*.plasmoid
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Plasma & QML compilation cache
+.cache/
+*.qmlc
+*.jsc

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+      http://www.kde.org/standards/kcfg/1.0/kcfg.xsd" >
+  <kcfgfile name=""/>
+
+  <group name="WeatherStation">
+    <entry name="placeDisplayName" type="string">
+      <default>Москва, Россия</default>
+    </entry>
+    <entry name="latitude" type="double">
+      <default>55.7522</default>
+    </entry>
+    <entry name="longitude" type="double">
+      <default>37.6156</default>
+    </entry>
+    <entry name="updateInterval" type="int">
+      <default>30</default>
+    </entry>
+  </group>
+
+  <group name="Appearance">
+    <entry name="uiLanguage" type="string">
+      <default>en_US</default>
+    </entry>
+    <entry name="showWeatherIcon" type="bool">
+      <default>true</default>
+    </entry>
+    <entry name="forecastMode" type="string">
+      <default>daily</default>
+    </entry>
+  </group>
+
+  <group name="Units">
+    <entry name="temperatureUnit" type="string">
+      <default>celsius</default>
+    </entry>
+    <entry name="speedUnit" type="string">
+      <default>ms</default>
+    </entry>
+    <entry name="pressureUnit" type="string">
+      <default>mmhg</default>
+    </entry>
+  </group>
+</kcfg>

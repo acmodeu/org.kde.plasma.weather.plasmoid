@@ -1,0 +1,23 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "KDE Plasma Contributors"
+            }
+        ],
+        "Category": "Environment",
+        "Description": "Weather forecast powered by Open-Meteo (works worldwide, including Russia without proxy/VPN)",
+        "Description[ru]": "Прогноз погоды на базе Open-Meteo (работает по всему миру, включая РФ без прокси и VPN)",
+        "EnabledByDefault": true,
+        "Icon": "weather-few-clouds",
+        "Id": "org.kde.plasma.weather.openmeteo",
+        "License": "GPL-2.0-or-later",
+        "Name": "Weather (Open-Meteo)",
+        "Name[ru]": "Погода (Open-Meteo)",
+        "Version": "1.0.0",
+        "Website": "https://github.com/acmodeu/org.kde.plasma.weather.plasmoid"
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-MainScript": "ui/main.qml"
+}
