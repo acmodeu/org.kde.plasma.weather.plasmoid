@@ -8,11 +8,12 @@ import "code/I18n.js" as I18n
 Kirigami.FormLayout {
     id: page
 
-    property string currentLanguage: Plasmoid.configuration.uiLanguage || "en_US"
+    property string cfg_uiLanguage: "en_US"
+    readonly property string currentLanguage: cfg_uiLanguage || "en_US"
     property alias cfg_updateInterval: updateIntervalSpin.value
-    property string cfg_placeDisplayName: Plasmoid.configuration.placeDisplayName
-    property double cfg_latitude: Plasmoid.configuration.latitude
-    property double cfg_longitude: Plasmoid.configuration.longitude
+    property string cfg_placeDisplayName: ""
+    property double cfg_latitude: 55.7522
+    property double cfg_longitude: 37.6156
 
     function tr(key, p1, p2) {
         return I18n.t(key, page.currentLanguage, p1, p2);

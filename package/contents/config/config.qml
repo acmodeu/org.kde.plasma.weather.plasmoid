@@ -4,7 +4,7 @@ import org.kde.plasma.plasmoid
 import "../ui/code/I18n.js" as I18n
 
 ConfigModel {
-    readonly property string currentLanguage: Plasmoid.configuration?.uiLanguage || "en_US"
+    readonly property string currentLanguage: (typeof Plasmoid !== "undefined" && Plasmoid.configuration?.uiLanguage) ? Plasmoid.configuration.uiLanguage : "en_US"
 
     ConfigCategory {
         name: I18n.t("Weather Station", currentLanguage)

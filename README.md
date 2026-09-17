@@ -8,7 +8,7 @@ A native KDE Plasma 6 desktop and panel widget providing accurate weather foreca
 
 ---
 
-## ✨ Features / Возможности
+## ✨ Features
 
 - 🌐 **No API Keys Required**: Zero configuration setup, no registration, tokens, or subscription limits needed.
 - 🚀 **Unrestricted Global Access**: Works reliably worldwide (including Russia without VPN or proxy services, unlike many default weather providers).
@@ -24,9 +24,13 @@ A native KDE Plasma 6 desktop and panel widget providing accurate weather foreca
   - Compact panel mode displaying current temperature and weather icon.
   - Fully reactive to Plasma themes and color schemes.
   - Option to hide/show weather icon on panel.
-- 🌍 **Modular Extensible Localization**:
-  - English (US) by default, optional Russian interface.
-  - Modular architecture with standalone locale definitions (`en_US.js`, `ru.js`) in `package/contents/ui/code/locales/`.
+- 🌍 **Supported Languages & Extensibility**:
+  - **Interface & Search**: English (`en_US`) and Russian (`ru`) are fully supported out of the box.
+  - **Smart Geocoding Search**: Typing in Cyrillic automatically queries the Russian geocoding index (`language=ru`), while Latin searches use the unified index with transparent fallback between languages.
+  - **Adding New Languages**: Support is currently focused on English and Russian. Other languages (such as Georgian, German, Spanish, etc.) can be easily added by creating a locale definition file in `package/contents/ui/code/locales/` and registering it in `I18n.js`. Pull requests are welcome!
+
+> [!NOTE]
+> **Languages Note**: Currently, the plasmoid officially provides **English** and **Russian** localizations. All Latin-script city names (including diacritics like *München*, *Kraków*, or transliterated *Tbilisi*) work seamlessly across both languages. Support for other non-Latin scripts (e.g., Georgian, Armenian, Greek, Arabic) can be enabled by adding corresponding locale modules.
 
 ---
 
@@ -86,7 +90,7 @@ systemctl --user restart plasma-plasmashell.service
 ## ⚙️ How to Add to Panel
 
 1. Right-click on the panel -> **Add Widgets...**.
-2. Search for **"Weather (Open-Meteo)"** or **"Погода"**.
+2. Search for **"Weather (Open-Meteo)"** or **"Погода (Open-Meteo)"**.
 3. Drag and drop the widget onto your panel.
 4. Right-click the widget -> **Configure Weather (Open-Meteo)...** to select your city and preferred units.
 

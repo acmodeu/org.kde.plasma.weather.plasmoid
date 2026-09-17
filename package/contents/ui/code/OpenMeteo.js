@@ -7,33 +7,49 @@ function searchLocations(query, callback, errorCallback, lang) {
         return;
     }
 
-    var geoLang = I18n.geocodingLanguage(lang);
-    var url = "https://geocoding-api.open-meteo.com/v1/search?name=" 
-        + encodeURIComponent(query.trim()) 
-        + "&count=10&language=" + geoLang + "&format=json";
+    var cleanQuery = query.trim();
+    var primaryLang = I18n.geocodingLanguage(lang);
+    if (/[а-яё\u0400-\u04FF]/i.test(cleanQuery)) {
+        primaryLang = "ru";
+    }
 
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                try {
-                    var data = JSON.parse(xhr.responseText);
-                    var results = data.results || [];
-                    callback(results);
-                } catch (e) {
+    function doRequest(targetLang, onEmptyFallback) {
+        var url = "https://geocoding-api.open-meteo.com/v1/search?name=" 
+            + encodeURIComponent(cleanQuery) 
+            + "&count=10&language=" + targetLang + "&format=json";
+
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        var results = data.results || [];
+                        if (results.length === 0 && onEmptyFallback) {
+                            onEmptyFallback();
+                        } else {
+                            callback(results);
+                        }
+                    } catch (e) {
+                        if (errorCallback) {
+                            errorCallback(I18n.t("Response parsing error: ", lang) + e.message);
+                        }
+                    }
+                } else {
                     if (errorCallback) {
-                        errorCallback(I18n.t("Response parsing error: ", lang) + e.message);
+                        errorCallback(I18n.t("Network error: HTTP ", lang) + xhr.status);
                     }
                 }
-            } else {
-                if (errorCallback) {
-                    errorCallback(I18n.t("Network error: HTTP ", lang) + xhr.status);
-                }
             }
-        }
-    };
-    xhr.open("GET", url, true);
-    xhr.send();
+        };
+        xhr.open("GET", url, true);
+        xhr.send();
+    }
+
+    var fallbackLang = (primaryLang === "ru") ? "en" : "ru";
+    doRequest(primaryLang, function() {
+        doRequest(fallbackLang, null);
+    });
 }
 
 function fetchForecast(lat, lon, callback, errorCallback, lang) {

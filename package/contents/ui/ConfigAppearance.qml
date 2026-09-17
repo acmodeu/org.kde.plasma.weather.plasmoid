@@ -7,9 +7,9 @@ import "code/I18n.js" as I18n
 Kirigami.FormLayout {
     id: page
 
-    property string cfg_uiLanguage: Plasmoid.configuration.uiLanguage || "en_US"
+    property string cfg_uiLanguage: "en_US"
     property alias cfg_showWeatherIcon: showIconCheck.checked
-    property string cfg_forecastMode: Plasmoid.configuration.forecastMode
+    property string cfg_forecastMode: "daily"
 
     function tr(key) {
         return I18n.t(key, page.cfg_uiLanguage);
@@ -25,7 +25,6 @@ Kirigami.FormLayout {
 
         onActivated: {
             page.cfg_uiLanguage = currentValue;
-            Plasmoid.configuration.uiLanguage = currentValue;
         }
 
         Connections {
@@ -43,10 +42,6 @@ Kirigami.FormLayout {
         id: showIconCheck
         Kirigami.FormData.label: page.tr("Task Manager / Panel:")
         text: page.tr("Show weather icon")
-        checked: Plasmoid.configuration.showWeatherIcon !== undefined ? Plasmoid.configuration.showWeatherIcon : true
-        onToggled: {
-            Plasmoid.configuration.showWeatherIcon = checked;
-        }
     }
 
     QQC2.ComboBox {

@@ -7,10 +7,11 @@ import "code/I18n.js" as I18n
 Kirigami.FormLayout {
     id: page
 
-    property string currentLanguage: Plasmoid.configuration.uiLanguage || "en_US"
-    property string cfg_temperatureUnit: Plasmoid.configuration.temperatureUnit
-    property string cfg_speedUnit: Plasmoid.configuration.speedUnit
-    property string cfg_pressureUnit: Plasmoid.configuration.pressureUnit
+    property string cfg_uiLanguage: "en_US"
+    readonly property string currentLanguage: cfg_uiLanguage || "en_US"
+    property string cfg_temperatureUnit: "celsius"
+    property string cfg_speedUnit: "ms"
+    property string cfg_pressureUnit: "mmhg"
 
     function tr(key) {
         return I18n.t(key, page.currentLanguage);
