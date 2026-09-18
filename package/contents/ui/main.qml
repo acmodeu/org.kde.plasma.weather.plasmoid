@@ -22,6 +22,8 @@ PlasmoidItem {
     property string errorMessage: ""
     property string lastUpdatedText: ""
     property var lastWeatherData: null
+    property double lastSuccessfulFetchTimestamp: 0
+    property double lastWatchdogTimestamp: Date.now()
 
     // Current weather data
     property double currentTemp: 0.0
@@ -99,8 +101,79 @@ PlasmoidItem {
         onTriggered: root.refreshForecast()
     }
 
+    // Watchdog timer: checks wall-clock time every 30 seconds to detect suspend/hibernate/resume
+    // and ensures weather updates even when QTimer freezes during system sleep
+    Timer {
+        id: watchdogTimer
+        interval: 30000 // 30 seconds
+        repeat: true
+        running: true
+        onTriggered: {
+            var now = Date.now();
+            var elapsedSinceLastCheck = now - root.lastWatchdogTimestamp;
+            root.lastWatchdogTimestamp = now;
+
+            if (elapsedSinceLastCheck < 0) {
+                return;
+            }
+
+            // If elapsed time is significantly greater than 30s (e.g. > 60s),
+            // the system was in suspend or hibernate state!
+            var wasSuspended = elapsedSinceLastCheck > 60000;
+            var updateIntervalMs = Math.max(5, root.updateIntervalMinutes) * 60 * 1000;
+            var timeSinceLastFetch = now - root.lastSuccessfulFetchTimestamp;
+            var isStale = root.lastSuccessfulFetchTimestamp === 0 || timeSinceLastFetch >= updateIntervalMs;
+
+            if (wasSuspended) {
+                // Give network 3.5 seconds to re-establish connection after sleep
+                wakeReconnectTimer.restart();
+            } else if (isStale && !root.isLoading) {
+                root.refreshForecast();
+            }
+        }
+    }
+
+    // Delay timer on wake-up: allows Wi-Fi/Ethernet to reconnect before sending request
+    Timer {
+        id: wakeReconnectTimer
+        interval: 3500 // 3.5 seconds
+        repeat: false
+        onTriggered: {
+            if (!root.isLoading) {
+                root.refreshForecast();
+            }
+        }
+    }
+
+    // Network retry timer: retries after 10s if connection was temporarily down
+    Timer {
+        id: retryTimer
+        interval: 10000 // 10 seconds
+        repeat: false
+        onTriggered: {
+            if (root.hasError && !root.isLoading) {
+                root.refreshForecast();
+            }
+        }
+    }
+
+    // Refresh when user expands widget card if data is stale
+    onExpandedChanged: {
+        if (root.expanded) {
+            var now = Date.now();
+            var updateIntervalMs = Math.max(5, root.updateIntervalMinutes) * 60 * 1000;
+            if (root.lastSuccessfulFetchTimestamp === 0 || (now - root.lastSuccessfulFetchTimestamp >= updateIntervalMs)) {
+                if (!root.isLoading) {
+                    root.refreshForecast();
+                }
+            }
+        }
+    }
+
     function parseWeatherData(data) {
         lastWeatherData = data;
+        lastSuccessfulFetchTimestamp = Date.now();
+        updateTimer.restart();
 
         // Update Current Weather
         currentTemp = data.current.temperature_2m;
@@ -195,6 +268,7 @@ PlasmoidItem {
 
         OpenMeteo.fetchForecast(lat, lon, function(data) {
             isLoading = false;
+            retryTimer.stop();
             if (!data || !data.current) {
                 hasError = true;
                 errorMessage = root.tr("Invalid response format from Open-Meteo");
@@ -206,10 +280,14 @@ PlasmoidItem {
             isLoading = false;
             hasError = true;
             errorMessage = err;
+            if (!hasData || (Date.now() - root.lastSuccessfulFetchTimestamp > 5 * 60 * 1000)) {
+                retryTimer.restart();
+            }
         }, currentLanguage);
     }
 
     Component.onCompleted: {
+        lastWatchdogTimestamp = Date.now();
         refreshForecast();
     }
 }

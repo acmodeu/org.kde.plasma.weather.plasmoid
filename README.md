@@ -24,6 +24,10 @@ A native KDE Plasma 6 desktop and panel widget providing accurate weather foreca
   - Compact panel mode displaying current temperature and weather icon.
   - Fully reactive to Plasma themes and color schemes.
   - Option to hide/show weather icon on panel.
+- 💤 **Smart Suspend & Hibernate Handling**:
+  - Automatically detects when the system resumes from suspend, sleep, or hibernation via a wall-clock watchdog.
+  - Intelligently waits for network interfaces (Wi-Fi/Ethernet) to re-establish connection before requesting fresh forecast data.
+  - Automatically updates stale data whenever the forecast card popup is opened.
 - 🌍 **Supported Languages & Extensibility**:
   - **Interface & Search**: English (`en_US`) and Russian (`ru`) are fully supported out of the box.
   - **Smart Geocoding Search**: Typing in Cyrillic automatically queries the Russian geocoding index (`language=ru`), while Latin searches use the unified index with transparent fallback between languages.
