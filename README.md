@@ -18,8 +18,13 @@ A native KDE Plasma 6 desktop and panel widget providing accurate weather foreca
   - **Wind Speed**: m/s (meters/second), km/h, or mph with 16-point compass directions.
   - **Pressure**: **mmHg** (мм рт. ст.) or **hPa** (hectopascals).
 - 📅 **Dual Forecast Modes in Card**:
-  - **7-day daily forecast**: Includes min/max temperatures and specific calendar dates for upcoming days.
-  - **24-hour hourly forecast**: Temperature, weather conditions, and precipitation tracking.
+  - **24-Hour Hourly Forecast with Discrete Paging**:
+    - **Pixel-Perfect 5-Card Pagination**: Smooth carousel showing exactly 5 cards per page with zero drift and crisp border alignment, navigated via previous/next buttons or mouse wheel / touchpad horizontal scroll.
+    - **"Tomorrow" Day Badges**: Cards showing forecast for the next day feature a compact **"Tomorrow"** (or **"Завтра"**) badge, with a subtle border highlight on the midnight transition card (`00:00`).
+    - **Current Hour Highlight**: The first card (current hour) is outlined with an accent border for immediate visual orientation.
+    - **Comprehensive Hourly Metrics**: Displays hour, weather condition icon, temperature, and relative humidity (`%`).
+    - **Auto-Reset on Open**: Automatically returns to the current hour whenever the popup card is opened.
+  - **7-Day Daily Forecast**: Includes min/max temperatures, condition summaries, and formatted calendar dates for upcoming days.
 - 🎨 **Panel Integration**:
   - Compact panel mode displaying current temperature and weather icon.
   - Fully reactive to Plasma themes and color schemes.
@@ -61,9 +66,10 @@ cd org.kde.plasma.weather.plasmoid
 The installer script (`install.sh`) automates the following steps:
 1. **Clears Plasma QML cache**: Removes `~/.cache/plasmashell/qmlcache` and `~/.cache/plasma*` to ensure modified QML files and assets are recompiled fresh instead of using outdated cached bytecode.
 2. **Pauses `plasmashell`**: Gracefully stops the running Plasma desktop shell (via `systemd` or `kquitapp6`) to prevent file-locking issues during installation.
-3. **Installs/Updates package**: Uses `kpackagetool6` to install or upgrade the plasmoid into `~/.local/share/plasma/plasmoids/org.kde.plasma.weather.openmeteo`.
-4. **Rebuilds system cache**: Runs `kbuildsycoca6` to register the new/updated applet in KDE's plugin database.
-5. **Restarts `plasmashell`**: Relaunches the Plasma shell so the widget is immediately available without logging out or rebooting.
+3. **Cleans up cached geometry**: Removes stale `popupWidth`/`popupHeight` geometry overrides in `plasma-org.kde.plasma.desktop-appletsrc` left from previous manual resizes, ensuring the exact 5-card layout is properly rendered.
+4. **Installs/Updates package**: Uses `kpackagetool6` to install or upgrade the plasmoid into `~/.local/share/plasma/plasmoids/org.kde.plasma.weather.openmeteo`.
+5. **Rebuilds system cache**: Runs `kbuildsycoca6` to register the new/updated applet in KDE's plugin database.
+6. **Restarts `plasmashell`**: Relaunches the Plasma shell so the widget is immediately available without logging out or rebooting.
 
 ---
 

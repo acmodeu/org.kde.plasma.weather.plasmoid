@@ -24,6 +24,23 @@ elif pgrep -x "plasmashell" >/dev/null 2>&1; then
     sleep 1
 fi
 
+# Clean up any cached popup dimensions from previous manual resizes
+if command -v kwriteconfig6 >/dev/null 2>&1; then
+    CONFIG_FILE="${HOME}/.config/plasma-org.kde.plasma.desktop-appletsrc"
+    if [ -f "${CONFIG_FILE}" ]; then
+        grep -B 2 "plugin=${PLUGIN_ID}" "${CONFIG_FILE}" 2>/dev/null | grep "^\[Containments\]" | tr -d '[]' | while read -r group_path; do
+            IFS='/' read -ra groups <<< "$(echo "$group_path" | sed 's/\]\[/\//g')"
+            args=("--file" "plasma-org.kde.plasma.desktop-appletsrc")
+            for g in "${groups[@]}"; do
+                args+=("--group" "$g")
+            done
+            args+=("--group" "Configuration")
+            kwriteconfig6 "${args[@]}" --key popupWidth --delete 2>/dev/null || true
+            kwriteconfig6 "${args[@]}" --key popupHeight --delete 2>/dev/null || true
+        done
+    fi
+fi
+
 if command -v kpackagetool6 >/dev/null 2>&1; then
     if [ -d "${HOME}/.local/share/plasma/plasmoids/${PLUGIN_ID}" ]; then
         kpackagetool6 --type Plasma/Applet -u "${PACKAGE_DIR}" 2>/dev/null || \

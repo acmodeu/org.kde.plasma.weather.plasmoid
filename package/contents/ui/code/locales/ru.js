@@ -91,6 +91,11 @@ var locale = {
         "Forecast:": "Прогноз:",
         "7 days": "7 дней",
         "24 hours": "24 часа",
+        "Hourly forecast (24 hours)": "Почасовой прогноз (24 часа)",
+        "Daily forecast (7 days)": "Прогноз на 7 дней",
+        "Scroll left": "Прокрутить влево",
+        "Scroll right": "Прокрутить вправо",
+        "Tomorrow": "Завтра",
 
         // Categories
         "Weather Station": "Метеостанция",

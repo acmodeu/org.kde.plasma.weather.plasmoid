@@ -49,7 +49,9 @@ PlasmoidItem {
 
     // Representations
     compactRepresentation: CompactRepresentation {}
-    fullRepresentation: FullRepresentation {}
+    fullRepresentation: FullRepresentation {
+        plasmoidItem: root
+    }
 
     // Plasma icon, status and tooltips
     Plasmoid.icon: currentWeatherIcon
@@ -157,7 +159,35 @@ PlasmoidItem {
         }
     }
 
-    // Refresh when user expands widget card if data is stale
+    function resetFullRepresentationScroll() {
+        if (root.fullRepresentationItem && typeof root.fullRepresentationItem.resetScrollPositions === "function") {
+            root.fullRepresentationItem.resetScrollPositions();
+        }
+    }
+
+    onFullRepresentationItemChanged: {
+        root.resetFullRepresentationScroll();
+    }
+
+    Timer {
+        id: expandResetTimer
+        interval: 35
+        repeat: false
+        onTriggered: {
+            root.resetFullRepresentationScroll();
+        }
+    }
+
+    Timer {
+        id: expandResetTimerLate
+        interval: 150
+        repeat: false
+        onTriggered: {
+            root.resetFullRepresentationScroll();
+        }
+    }
+
+    // Refresh when user expands widget card if data is stale, or re-align hourly forecast with current hour
     onExpandedChanged: {
         if (root.expanded) {
             var now = Date.now();
@@ -166,13 +196,19 @@ PlasmoidItem {
                 if (!root.isLoading) {
                     root.refreshForecast();
                 }
+            } else if (lastWeatherData) {
+                parseWeatherData(lastWeatherData);
             }
+            root.resetFullRepresentationScroll();
+            expandResetTimer.restart();
+            expandResetTimerLate.restart();
+        } else {
+            root.resetFullRepresentationScroll();
         }
     }
 
     function parseWeatherData(data) {
         lastWeatherData = data;
-        lastSuccessfulFetchTimestamp = Date.now();
         updateTimer.restart();
 
         // Update Current Weather
@@ -223,29 +259,49 @@ PlasmoidItem {
             var hTemps = data.hourly.temperature_2m;
             var hCodes = data.hourly.weather_code;
             var hHumidities = data.hourly.relative_humidity_2m;
+            var hIsDays = data.hourly.is_day;
 
-            var currentHourStr = now.toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
+            // Target location's current hour in its timezone (or fallback to local)
+            var offsetMs = (data.utc_offset_seconds !== undefined)
+                ? (data.utc_offset_seconds * 1000)
+                : -(now.getTimezoneOffset() * 60 * 1000);
+            var targetNow = new Date(now.getTime() + offsetMs);
+            var currentHourStr = targetNow.toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
+
             var startIndex = 0;
             for (var j = 0; j < hTimes.length; j++) {
-                if (hTimes[j].startsWith(currentHourStr)) {
+                if (hTimes[j].startsWith(currentHourStr) || hTimes[j] > currentHourStr) {
                     startIndex = j;
                     break;
                 }
             }
 
+            var todayDateStr = (startIndex < hTimes.length) ? hTimes[startIndex].slice(0, 10) : targetNow.toISOString().slice(0, 10);
+
             var count = Math.min(24, hTimes.length - startIndex);
             for (var k = startIndex; k < startIndex + count; k++) {
                 var hourStr = OpenMeteo.formatHour(hTimes[k]);
-                var hDate = new Date(hTimes[k]);
-                var isHourDay = (hDate.getHours() >= 6 && hDate.getHours() < 22) ? 1 : 0;
+                var isHourDay = 1;
+                if (hIsDays && hIsDays[k] !== undefined) {
+                    isHourDay = hIsDays[k];
+                } else {
+                    var hNum = parseInt(hTimes[k].slice(11, 13), 10);
+                    isHourDay = (hNum >= 6 && hNum < 22) ? 1 : 0;
+                }
                 var hIcon = OpenMeteo.wmoToIcon(hCodes[k], isHourDay);
                 var hTemp = OpenMeteo.convertTemperature(hTemps[k], Plasmoid.configuration?.temperatureUnit, false);
+                var cardDateStr = hTimes[k].slice(0, 10);
+                var isNextDay = (cardDateStr > todayDateStr);
+                var isFirstOfNextDay = isNextDay && (k === startIndex || hTimes[k - 1].slice(0, 10) <= todayDateStr);
 
                 hourlyForecastModel.append({
                     hour: hourStr,
                     icon: hIcon,
                     temperature: hTemp,
-                    humidity: hHumidities ? hHumidities[k] : 0
+                    humidity: hHumidities ? hHumidities[k] : 0,
+                    isNextDay: isNextDay,
+                    isFirstOfNextDay: isFirstOfNextDay,
+                    dayLabel: isNextDay ? root.tr("Tomorrow") : ""
                 });
             }
         }
@@ -275,6 +331,7 @@ PlasmoidItem {
                 return;
             }
 
+            root.lastSuccessfulFetchTimestamp = Date.now();
             parseWeatherData(data);
         }, function(err) {
             isLoading = false;

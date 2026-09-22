@@ -87,6 +87,11 @@ var locale = {
         "Forecast:": "Forecast:",
         "7 days": "7 days",
         "24 hours": "24 hours",
+        "Hourly forecast (24 hours)": "Hourly forecast (24 hours)",
+        "Daily forecast (7 days)": "Daily forecast (7 days)",
+        "Scroll left": "Scroll left",
+        "Scroll right": "Scroll right",
+        "Tomorrow": "Tomorrow",
 
         // Categories
         "Weather Station": "Weather Station",

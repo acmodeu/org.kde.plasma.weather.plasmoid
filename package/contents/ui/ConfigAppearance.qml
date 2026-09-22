@@ -43,29 +43,4 @@ Kirigami.FormLayout {
         Kirigami.FormData.label: page.tr("Task Manager / Panel:")
         text: page.tr("Show weather icon")
     }
-
-    QQC2.ComboBox {
-        id: forecastModeCombo
-        Kirigami.FormData.label: page.tr("Default forecast view:")
-        textRole: "text"
-        valueRole: "value"
-        model: [
-            { text: page.tr("Daily (7 days)"), value: "daily" },
-            { text: page.tr("Hourly (24 hours)"), value: "hourly" }
-        ]
-        currentIndex: count > 0 ? Math.max(0, indexOfValue(page.cfg_forecastMode)) : 0
-        onActivated: {
-            page.cfg_forecastMode = currentValue;
-        }
-
-        Connections {
-            target: page
-            function onCfg_forecastModeChanged() {
-                var idx = forecastModeCombo.indexOfValue(page.cfg_forecastMode);
-                if (idx >= 0 && forecastModeCombo.currentIndex !== idx) {
-                    forecastModeCombo.currentIndex = idx;
-                }
-            }
-        }
-    }
 }

@@ -14,7 +14,7 @@
         "License": "GPL-2.0-or-later",
         "Name": "Weather (Open-Meteo)",
         "Name[ru]": "Погода (Open-Meteo)",
-        "Version": "1.0.0",
+        "Version": "1.1.0",
         "Website": "https://github.com/acmodeu/org.kde.plasma.weather.plasmoid"
     },
     "KPackageStructure": "Plasma/Applet",
