@@ -461,14 +461,6 @@ ColumnLayout {
                                             : Qt.alpha(Kirigami.Theme.textColor, 0.15))
                                     border.width: (index === 0 || model.isFirstOfNextDay) ? 1.5 : 1
 
-                                    HoverHandler {
-                                        id: cardHoverHandler
-                                    }
-
-                                    QQC2.ToolTip.visible: cardHoverHandler.hovered && !!model.isNextDay
-                                    QQC2.ToolTip.delay: 400
-                                    QQC2.ToolTip.text: root.tr("Tomorrow")
-
                                     ColumnLayout {
                                         anchors.fill: parent
                                         anchors.margins: Kirigami.Units.smallSpacing

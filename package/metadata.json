@@ -6,15 +6,15 @@
             }
         ],
         "Category": "Environment",
-        "Description": "Weather forecast powered by Open-Meteo (works worldwide, including Russia without proxy/VPN)",
-        "Description[ru]": "Прогноз погоды на базе Open-Meteo (работает по всему миру, включая РФ без прокси и VPN)",
+        "Description": "Weather forecast powered by Open-Meteo",
+        "Description[ru]": "Прогноз погоды на базе Open-Meteo",
         "EnabledByDefault": true,
         "Icon": "weather-few-clouds",
         "Id": "org.kde.plasma.weather.openmeteo",
         "License": "GPL-2.0-or-later",
         "Name": "Weather (Open-Meteo)",
         "Name[ru]": "Погода (Open-Meteo)",
-        "Version": "1.1.0",
+        "Version": "1.1.1",
         "Website": "https://github.com/acmodeu/org.kde.plasma.weather.plasmoid"
     },
     "KPackageStructure": "Plasma/Applet",

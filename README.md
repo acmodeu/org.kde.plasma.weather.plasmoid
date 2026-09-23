@@ -1,5 +1,7 @@
 # Weather Report (Open-Meteo) for KDE Plasma 6
 
+[English](README.md) | [Русский](README.ru.md)
+
 [![KDE Plasma 6](https://img.shields.io/badge/KDE%20Plasma-6.0%2B-blue.svg)](https://kde.org/plasma-desktop/)
 [![Qt 6](https://img.shields.io/badge/Qt-6-green.svg)](https://www.qt.io/)
 [![License: GPL v2+](https://img.shields.io/badge/License-GPLv2%2B-blue.svg)](LICENSE)
@@ -11,16 +13,15 @@ A native KDE Plasma 6 desktop and panel widget providing accurate weather foreca
 ## ✨ Features
 
 - 🌐 **No API Keys Required**: Zero configuration setup, no registration, tokens, or subscription limits needed.
-- 🚀 **Unrestricted Global Access**: Works reliably worldwide (including Russia without VPN or proxy services, unlike many default weather providers).
 - 🔍 **Multi-Language City Search**: Built-in Open-Meteo Geocoding finds cities, towns, and regions in both English and Russian.
 - 🌡️ **Flexible Units of Measurement**:
   - **Temperature**: Celsius (°C) or Fahrenheit (°F).
   - **Wind Speed**: m/s (meters/second), km/h, or mph with 16-point compass directions.
-  - **Pressure**: **mmHg** (мм рт. ст.) or **hPa** (hectopascals).
+  - **Pressure**: **mmHg** or **hPa** (hectopascals).
 - 📅 **Dual Forecast Modes in Card**:
   - **24-Hour Hourly Forecast with Discrete Paging**:
     - **Pixel-Perfect 5-Card Pagination**: Smooth carousel showing exactly 5 cards per page with zero drift and crisp border alignment, navigated via previous/next buttons or mouse wheel / touchpad horizontal scroll.
-    - **"Tomorrow" Day Badges**: Cards showing forecast for the next day feature a compact **"Tomorrow"** (or **"Завтра"**) badge, with a subtle border highlight on the midnight transition card (`00:00`).
+    - **"Tomorrow" Day Badges**: Cards showing forecast for the next day feature a compact **"Tomorrow"** badge, with a subtle border highlight on the midnight transition card (`00:00`).
     - **Current Hour Highlight**: The first card (current hour) is outlined with an accent border for immediate visual orientation.
     - **Comprehensive Hourly Metrics**: Displays hour, weather condition icon, temperature, and relative humidity (`%`).
     - **Auto-Reset on Open**: Automatically returns to the current hour whenever the popup card is opened.
@@ -29,10 +30,12 @@ A native KDE Plasma 6 desktop and panel widget providing accurate weather foreca
   - Compact panel mode displaying current temperature and weather icon.
   - Fully reactive to Plasma themes and color schemes.
   - Option to hide/show weather icon on panel.
-- 💤 **Smart Suspend & Hibernate Handling**:
-  - Automatically detects when the system resumes from suspend, sleep, or hibernation via a wall-clock watchdog.
-  - Intelligently waits for network interfaces (Wi-Fi/Ethernet) to re-establish connection before requesting fresh forecast data.
-  - Automatically updates stale data whenever the forecast card popup is opened.
+- 🛡️ **Reliable Network, Server Fallback & Sleep Recovery**:
+  - **Automatic Multi-Host Mirror Fallback**: Transparent failover across official Open-Meteo endpoints (`api.open-meteo.com`, `customer-api-eu02.open-meteo.com`, `historical-forecast-api.open-meteo.com`) with a fast 3.5s per-host timeout. Guarantees uninterrupted direct operation across restricted networks or ISP subnet blocks without requiring VPN or proxy setup. The active working mirror is cached in memory for near-instant subsequent refreshes (~70ms).
+  - **Strict Request Timeouts & Watchdog**: Native QML timers prevent dead or stalled network sockets from freezing the widget UI.
+  - **Sleep / Hibernate Detection**: Wall-clock watchdog automatically detects when the system wakes up from suspend or hibernation and waits for network routes to stabilize before fetching fresh data.
+  - **Stale Data Auto-Refresh**: Automatically updates stale data whenever the forecast card popup is opened.
+  - **Configurable Debug Logging**: Toggle diagnostic logging directly in the widget settings (**Appearance** tab) to inspect requests, mirror failovers, and timings via `journalctl --user -u plasma-plasmashell -f`.
 - 🌍 **Supported Languages & Extensibility**:
   - **Interface & Search**: English (`en_US`) and Russian (`ru`) are fully supported out of the box.
   - **Smart Geocoding Search**: Typing in Cyrillic automatically queries the Russian geocoding index (`language=ru`), while Latin searches use the unified index with transparent fallback between languages.
@@ -100,7 +103,7 @@ systemctl --user restart plasma-plasmashell.service
 ## ⚙️ How to Add to Panel
 
 1. Right-click on the panel -> **Add Widgets...**.
-2. Search for **"Weather (Open-Meteo)"** or **"Погода (Open-Meteo)"**.
+2. Search for **"Weather (Open-Meteo)"**.
 3. Drag and drop the widget onto your panel.
 4. Right-click the widget -> **Configure Weather (Open-Meteo)...** to select your city and preferred units.
 
@@ -137,7 +140,8 @@ systemctl --user restart plasma-plasmashell.service
 ├── pack.sh                           # .plasmoid bundle packager
 ├── .gitignore                        # Git ignore rules
 ├── LICENSE                           # GNU General Public License v2.0 or later
-└── README.md                         # Project documentation
+├── README.md                         # Project documentation (English)
+└── README.ru.md                      # Project documentation (Russian)
 ```
 
 ---

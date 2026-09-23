@@ -74,6 +74,8 @@ var locale = {
         "Failed to load forecast: HTTP ": "Failed to load forecast: HTTP ",
         "Forecast parsing error: ": "Forecast parsing error: ",
         "Network error: HTTP ": "Network error: HTTP ",
+        "Network request timed out": "Network request timed out",
+        "Network request failed": "Network request failed",
         "Response parsing error: ": "Response parsing error: ",
 
         // Weather details
@@ -105,6 +107,8 @@ var locale = {
         "Default forecast view:": "Default forecast view:",
         "Daily (7 days)": "Daily (7 days)",
         "Hourly (24 hours)": "Hourly (24 hours)",
+        "Logging:": "Logging:",
+        "Enable debug logging": "Enable debug logging",
 
         // Settings: Units
         "Temperature units:": "Temperature units:",

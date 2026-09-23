@@ -30,6 +30,9 @@
     <entry name="forecastMode" type="string">
       <default>daily</default>
     </entry>
+    <entry name="enableLogging" type="bool">
+      <default>false</default>
+    </entry>
   </group>
 
   <group name="Units">

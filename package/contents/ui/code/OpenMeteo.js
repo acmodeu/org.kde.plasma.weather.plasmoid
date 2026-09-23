@@ -1,7 +1,54 @@
 .pragma library
 .import "I18n.js" as I18n
 
-function searchLocations(query, callback, errorCallback, lang) {
+var FORECAST_HOSTS = [
+    "api.open-meteo.com",
+    "customer-api-eu02.open-meteo.com",
+    "historical-forecast-api.open-meteo.com"
+];
+var activeHostIndex = 0;
+
+function createTimeoutTimer(parent, callback, delay) {
+    if (!parent || typeof Qt === "undefined" || !Qt.createQmlObject) {
+        return null;
+    }
+    try {
+        var timer = Qt.createQmlObject('import QtQuick; Timer { interval: ' + delay + '; repeat: false; running: true; }', parent);
+        if (timer && timer.triggered) {
+            timer.triggered.connect(function() {
+                try { timer.destroy(); } catch (e) {}
+                callback();
+            });
+            return timer;
+        }
+    } catch (e) {
+        // Fallback if dynamic object creation fails
+    }
+    return null;
+}
+
+function clearTimer(timer) {
+    if (timer) {
+        try {
+            timer.stop();
+            timer.destroy();
+        } catch (e) {}
+    }
+}
+
+function log(enabled, msg) {
+    if (enabled) {
+        console.log("[OpenMeteo] " + msg);
+    }
+}
+
+function warn(enabled, msg) {
+    if (enabled) {
+        console.warn("[OpenMeteo] " + msg);
+    }
+}
+
+function searchLocations(query, callback, errorCallback, lang, parentItem, enableLogging) {
     if (!query || query.trim().length === 0) {
         callback([]);
         return;
@@ -13,37 +60,72 @@ function searchLocations(query, callback, errorCallback, lang) {
         primaryLang = "ru";
     }
 
+    log(enableLogging, "Geocoding search: '" + cleanQuery + "' (" + primaryLang + ")");
+
     function doRequest(targetLang, onEmptyFallback) {
         var url = "https://geocoding-api.open-meteo.com/v1/search?name=" 
             + encodeURIComponent(cleanQuery) 
             + "&count=10&language=" + targetLang + "&format=json";
 
         var xhr = new XMLHttpRequest();
+        var isHandled = false;
+        var timer = null;
+
+        function handleError(msg) {
+            if (isHandled) return;
+            isHandled = true;
+            if (timer) {
+                clearTimer(timer);
+                timer = null;
+            }
+            try { xhr.abort(); } catch (e) {}
+            warn(enableLogging, "Geocoding error: " + msg);
+            if (errorCallback) {
+                errorCallback(msg);
+            }
+        }
+
+        timer = createTimeoutTimer(parentItem, function() {
+            handleError(I18n.t("Network request timed out", lang));
+        }, 10000);
+
+        xhr.onerror = function() {
+            handleError(I18n.t("Network request failed", lang));
+        };
+
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (isHandled) return;
+                if (timer) {
+                    clearTimer(timer);
+                    timer = null;
+                }
                 if (xhr.status === 200) {
+                    isHandled = true;
                     try {
                         var data = JSON.parse(xhr.responseText);
                         var results = data.results || [];
                         if (results.length === 0 && onEmptyFallback) {
                             onEmptyFallback();
                         } else {
+                            log(enableLogging, "Geocoding found " + results.length + " locations");
                             callback(results);
                         }
                     } catch (e) {
-                        if (errorCallback) {
-                            errorCallback(I18n.t("Response parsing error: ", lang) + e.message);
-                        }
+                        handleError(I18n.t("Response parsing error: ", lang) + e.message);
                     }
-                } else {
-                    if (errorCallback) {
-                        errorCallback(I18n.t("Network error: HTTP ", lang) + xhr.status);
-                    }
+                } else if (xhr.status > 0) {
+                    handleError(I18n.t("Network error: HTTP ", lang) + xhr.status);
                 }
             }
         };
-        xhr.open("GET", url, true);
-        xhr.send();
+
+        try {
+            xhr.open("GET", url, true);
+            xhr.send();
+        } catch (e) {
+            handleError(I18n.t("Network request failed", lang) + ": " + e.message);
+        }
     }
 
     var fallbackLang = (primaryLang === "ru") ? "en" : "ru";
@@ -52,7 +134,7 @@ function searchLocations(query, callback, errorCallback, lang) {
     });
 }
 
-function fetchForecast(lat, lon, callback, errorCallback, lang) {
+function fetchForecast(lat, lon, callback, errorCallback, lang, parentItem, enableLogging) {
     if (lat === undefined || lon === undefined) {
         if (errorCallback) {
             errorCallback(I18n.t("Coordinates are not set", lang));
@@ -60,34 +142,88 @@ function fetchForecast(lat, lon, callback, errorCallback, lang) {
         return;
     }
 
-    var url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat 
+    var query = "latitude=" + lat 
         + "&longitude=" + lon 
         + "&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_direction_10m,surface_pressure"
         + "&hourly=temperature_2m,weather_code,relative_humidity_2m,is_day"
         + "&daily=weather_code,temperature_2m_max,temperature_2m_min"
         + "&wind_speed_unit=ms&timezone=auto&forecast_days=7";
 
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                try {
-                    var data = JSON.parse(xhr.responseText);
-                    callback(data);
-                } catch (e) {
-                    if (errorCallback) {
-                        errorCallback(I18n.t("Forecast parsing error: ", lang) + e.message);
-                    }
+    var lastErrorMessage = "";
+
+    function tryHost(offset) {
+        if (offset >= FORECAST_HOSTS.length) {
+            warn(enableLogging, "All " + FORECAST_HOSTS.length + " hosts failed to load forecast");
+            if (errorCallback) {
+                errorCallback(lastErrorMessage || I18n.t("Network request failed", lang));
+            }
+            return;
+        }
+
+        var hostIdx = (activeHostIndex + offset) % FORECAST_HOSTS.length;
+        var host = FORECAST_HOSTS[hostIdx];
+        var url = "https://" + host + "/v1/forecast?" + query;
+
+        log(enableLogging, "Requesting forecast from " + host + " (attempt " + (offset + 1) + "/" + FORECAST_HOSTS.length + ")");
+
+        var xhr = new XMLHttpRequest();
+        var isHandled = false;
+        var timer = null;
+
+        function tryNext(msg) {
+            if (isHandled) return;
+            isHandled = true;
+            if (timer) {
+                clearTimer(timer);
+                timer = null;
+            }
+            lastErrorMessage = msg;
+            warn(enableLogging, "Host " + host + " failed (" + msg + "), trying next mirror...");
+            try { xhr.abort(); } catch (e) {}
+            tryHost(offset + 1);
+        }
+
+        // 3.5s timeout per host for fast failover when IP is blocked
+        timer = createTimeoutTimer(parentItem, function() {
+            tryNext(I18n.t("Network request timed out", lang));
+        }, 3500);
+
+        xhr.onerror = function() {
+            tryNext(I18n.t("Network request failed", lang));
+        };
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (isHandled) return;
+                if (timer) {
+                    clearTimer(timer);
+                    timer = null;
                 }
-            } else {
-                if (errorCallback) {
-                    errorCallback(I18n.t("Failed to load forecast: HTTP ", lang) + xhr.status);
+                if (xhr.status === 200) {
+                    isHandled = true;
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        activeHostIndex = hostIdx; // Remember working host for subsequent fast requests
+                        log(enableLogging, "Forecast successfully loaded from " + host);
+                        callback(data);
+                    } catch (e) {
+                        tryNext(I18n.t("Forecast parsing error: ", lang) + e.message);
+                    }
+                } else if (xhr.status > 0) {
+                    tryNext(I18n.t("Failed to load forecast: HTTP ", lang) + xhr.status);
                 }
             }
+        };
+
+        try {
+            xhr.open("GET", url, true);
+            xhr.send();
+        } catch (e) {
+            tryNext(I18n.t("Network request failed", lang) + ": " + e.message);
         }
-    };
-    xhr.open("GET", url, true);
-    xhr.send();
+    }
+
+    tryHost(0);
 }
 
 function wmoToIcon(code, isDay) {

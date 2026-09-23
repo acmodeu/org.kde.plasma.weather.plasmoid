@@ -10,6 +10,7 @@ Kirigami.FormLayout {
     property string cfg_uiLanguage: "en_US"
     property alias cfg_showWeatherIcon: showIconCheck.checked
     property string cfg_forecastMode: "daily"
+    property alias cfg_enableLogging: enableLoggingCheck.checked
 
     function tr(key) {
         return I18n.t(key, page.cfg_uiLanguage);
@@ -42,5 +43,11 @@ Kirigami.FormLayout {
         id: showIconCheck
         Kirigami.FormData.label: page.tr("Task Manager / Panel:")
         text: page.tr("Show weather icon")
+    }
+
+    QQC2.CheckBox {
+        id: enableLoggingCheck
+        Kirigami.FormData.label: page.tr("Logging:")
+        text: page.tr("Enable debug logging")
     }
 }

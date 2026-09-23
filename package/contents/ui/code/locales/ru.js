@@ -78,6 +78,8 @@ var locale = {
         "Failed to load forecast: HTTP ": "Ошибка загрузки прогноза: HTTP ",
         "Forecast parsing error: ": "Ошибка парсинга прогноза: ",
         "Network error: HTTP ": "Ошибка сети: HTTP ",
+        "Network request timed out": "Время ожидания ответа сервера истекло",
+        "Network request failed": "Сетевой запрос не удался",
         "Response parsing error: ": "Ошибка обработки ответа: ",
 
         // Weather details
@@ -109,6 +111,8 @@ var locale = {
         "Default forecast view:": "Режим прогноза по умолчанию:",
         "Daily (7 days)": "По дням (7 дней)",
         "Hourly (24 hours)": "По часам (24 часа)",
+        "Logging:": "Журнал:",
+        "Enable debug logging": "Включить отладочные логи в системный журнал",
 
         // Settings: Units
         "Temperature units:": "Единицы температуры:",

@@ -24,6 +24,7 @@ PlasmoidItem {
     property var lastWeatherData: null
     property double lastSuccessfulFetchTimestamp: 0
     property double lastWatchdogTimestamp: Date.now()
+    property double lastFetchStartTime: 0
 
     // Current weather data
     property double currentTemp: 0.0
@@ -78,9 +79,22 @@ PlasmoidItem {
 
     // Configuration properties with reactive change handlers
     readonly property bool showWeatherIcon: Plasmoid.configuration?.showWeatherIcon ?? true
+    readonly property bool enableLogging: Plasmoid.configuration?.enableLogging ?? false
     readonly property double targetLatitude: Plasmoid.configuration?.latitude ?? 55.7522
     readonly property double targetLongitude: Plasmoid.configuration?.longitude ?? 37.6156
     readonly property int updateIntervalMinutes: Plasmoid.configuration?.updateInterval ?? 30
+
+    function log(msg) {
+        if (root.enableLogging) {
+            console.log("[WeatherPlasmoid] " + msg);
+        }
+    }
+
+    function logWarn(msg) {
+        if (root.enableLogging) {
+            console.warn("[WeatherPlasmoid] " + msg);
+        }
+    }
 
     onTargetLatitudeChanged: root.refreshForecast()
     onTargetLongitudeChanged: root.refreshForecast()
@@ -119,6 +133,11 @@ PlasmoidItem {
                 return;
             }
 
+            // If request has been stuck in loading state for > 12s, unblock it
+            if (root.isLoading && (now - root.lastFetchStartTime > 12000)) {
+                root.isLoading = false;
+            }
+
             // If elapsed time is significantly greater than 30s (e.g. > 60s),
             // the system was in suspend or hibernate state!
             var wasSuspended = elapsedSinceLastCheck > 60000;
@@ -127,20 +146,25 @@ PlasmoidItem {
             var isStale = root.lastSuccessfulFetchTimestamp === 0 || timeSinceLastFetch >= updateIntervalMs;
 
             if (wasSuspended) {
-                // Give network 3.5 seconds to re-establish connection after sleep
+                root.log("System resume detected, waiting 5s for network reconnect...");
+                // Give network 5 seconds to re-establish Wi-Fi / VPN / proxy routes after sleep
                 wakeReconnectTimer.restart();
             } else if (isStale && !root.isLoading) {
+                root.log("Weather data is stale (" + Math.round(timeSinceLastFetch / 60000) + "m since last update), refreshing...");
                 root.refreshForecast();
             }
         }
     }
 
-    // Delay timer on wake-up: allows Wi-Fi/Ethernet to reconnect before sending request
+    // Delay timer on wake-up: allows Wi-Fi/Ethernet/VPN to reconnect before sending request
     Timer {
         id: wakeReconnectTimer
-        interval: 3500 // 3.5 seconds
+        interval: 5000 // 5 seconds
         repeat: false
         onTriggered: {
+            if (root.isLoading && (Date.now() - root.lastFetchStartTime > 10000)) {
+                root.isLoading = false;
+            }
             if (!root.isLoading) {
                 root.refreshForecast();
             }
@@ -191,6 +215,9 @@ PlasmoidItem {
     onExpandedChanged: {
         if (root.expanded) {
             var now = Date.now();
+            if (root.isLoading && (now - root.lastFetchStartTime > 12000)) {
+                root.isLoading = false;
+            }
             var updateIntervalMs = Math.max(5, root.updateIntervalMinutes) * 60 * 1000;
             if (root.lastSuccessfulFetchTimestamp === 0 || (now - root.lastSuccessfulFetchTimestamp >= updateIntervalMs)) {
                 if (!root.isLoading) {
@@ -319,6 +346,8 @@ PlasmoidItem {
             return;
         }
 
+        root.log("Refreshing forecast for (" + lat + ", " + lon + ")...");
+        root.lastFetchStartTime = Date.now();
         isLoading = true;
         hasError = false;
 
@@ -328,19 +357,22 @@ PlasmoidItem {
             if (!data || !data.current) {
                 hasError = true;
                 errorMessage = root.tr("Invalid response format from Open-Meteo");
+                root.logWarn("Invalid response format received from Open-Meteo");
                 return;
             }
 
             root.lastSuccessfulFetchTimestamp = Date.now();
             parseWeatherData(data);
+            root.log("Forecast updated successfully: " + root.currentTemp + "°C (" + root.lastUpdatedText + ")");
         }, function(err) {
             isLoading = false;
             hasError = true;
             errorMessage = err;
+            root.logWarn("Failed to fetch forecast: " + err);
             if (!hasData || (Date.now() - root.lastSuccessfulFetchTimestamp > 5 * 60 * 1000)) {
                 retryTimer.restart();
             }
-        }, currentLanguage);
+        }, currentLanguage, root, root.enableLogging);
     }
 
     Component.onCompleted: {

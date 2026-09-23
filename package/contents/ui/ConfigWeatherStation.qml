@@ -169,6 +169,6 @@ Kirigami.FormLayout {
             busyIndicator.running = false;
             statusLabel.text = err;
             statusLabel.color = Kirigami.Theme.negativeTextColor;
-        }, page.currentLanguage);
+        }, page.currentLanguage, page, (typeof Plasmoid !== "undefined" && Plasmoid.configuration?.enableLogging) || false);
     }
 }
